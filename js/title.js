@@ -17,6 +17,16 @@ const auth = getAuth();
 const db = getDatabase();
 const analytics = getAnalytics(app);
 
+document.addEventListener('DOMContentLoaded', () => {
+    const isGitHubPages = location.hostname.includes('github.io');
+    const repoName = 'randomgamename';
+    const imagePath = isGitHubPages 
+        ? `/${repoName}/assets/title.jpg` 
+        : '../assets/title.jpg';
+    
+    document.body.style.background = `url(${imagePath}) no-repeat center center fixed`;
+});
+
 function logout() {
     const uId = localStorage.getItem('userId');
     if (uId) {
