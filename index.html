@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X - Title</title>
+    <link rel="stylesheet" href="/css/title.css">
+</head>
+
+<body>
+    <div id="notification-area" class="notification-area"></div>
+    <div class="overlay"></div>
+    <div class="container">
+        <div class="account-button">
+            <button onclick="openPopup()" class="account-button">Account</button>
+        </div>
+        <div class="content">
+            <h1 class="title">X</h1>
+            <button class="button" onclick="playFunction()">Play</button>
+            <button class="button" onclick="settingsFunction()">Settings</button>
+            <button class="button" onclick="socialFunction()">Social</button>
+        </div>
+    </div>
+    <div id="accountPopup" class="popup">
+        <div class="popup-content">
+            <span class="close" onclick="closePopup()">&times;</span>
+            <!-- Inside your sign-in popup content -->
+            <div id="signInForm" style="display: block;">
+                <h2>Sign In</h2>
+                <form id="signin-form">
+                    <div class="input-group">
+                        <label for="signin-username">Email</label>
+                        <input type="email" id="signin-username" name="username" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="signin-password">Password</label>
+                        <input type="password" id="signin-password" name="password" required>
+                    </div>
+                    <button type="submit">Sign In</button>
+                </form>
+                <br>
+                <button type="button" id="logOutButton">Logout</button>
+                <br>
+                <button class="toggle-button" onclick="showSignUpForm()">Don't have an account? Sign Up</button>
+                <button class="toggle-button" onclick="showResetPasswordForm()">Forgot your password? Reset</button>
+
+            </div>
+
+            <div id="signUpForm" style="display: none;">
+                <h2>Sign Up</h2>
+                <form id="signup-form">
+                    <div class="input-group">
+                        <label for="signup-username">Username</label>
+                        <input type="text" id="signup-username" name="username" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="signup-password">Password</label>
+                        <input type="password" id="signup-password" name="password" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="signup-email">Email</label>
+                        <input type="email" id="signup-email" name="email" required>
+                    </div>
+                    <button type="submit">Sign Up</button>
+                </form>
+                <button class="toggle-button" onclick="showSignInForm()">Already have an account? Sign In</button>
+            </div>
+            <div id="resetPasswordForm" style="display: none;">
+                <h2>Reset Password</h2>
+                <form id="reset-password-form">
+                    <div class="input-group">
+                        <label for="reset-email">Email</label>
+                        <input type="email" id="reset-email" name="email" required>
+                    </div>
+                    <button type="submit">Reset Password</button>
+                </form>
+                <button class="toggle-button" onclick="showSignInForm()">Back to Sign In</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="friendsPopup" class="popup">
+        <div class="popup-content">
+            <span id="closeFriendsPopup" class="close" onclick="closeFriendsPopup()">&times;</span>
+            <!-- Inside your friends popup content (friendsPopup div) -->
+            <h2>Friends List</h2>
+            <div id="friendsList">
+                <!-- Friend items will be dynamically added here -->
+            </div>
+            <button class="button" id="addFriendButton">Add Friend</button>
+
+        </div>
+    </div>
+
+    <div id="invitationContainer" class="invitation-container"></div>
+
+    <script type="module" src="/js/title.js"></script>
+    <script type="module" src="/js/statusHandler.js"></script>
+
+</body>
+
+</html>
