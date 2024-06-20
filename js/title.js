@@ -289,7 +289,7 @@ function fetchFriends() {
                             inviteButton.classList.add('invite-button');
                             inviteButton.addEventListener('click', () => {
                                 const userId = localStorage.getItem('userId');
-                                const username = localStorage.getItem('email'); // Assume this is set somewhere in your app
+                                const username = localStorage.getItem('email');
                                 const friendId = friendData.uid;
 
                                 if (!userId || !friendId) {
@@ -305,7 +305,7 @@ function fetchFriends() {
                                     status: 'pending',
                                     timestamp: new Date().toISOString()
                                 }).then(() => {
-                                    alert(`Invitation sent to ${friendData.username || friendData.email.split('@')[0]}`);
+                                    // alert(`Invitation sent to ${friendData.username || friendData.email.split('@')[0]}`);
                                 }).catch(error => {
                                     console.error('Error sending invitation:', error);
                                     alert('Failed to send invitation.');
@@ -390,30 +390,7 @@ function fetchPartyInvitations() {
             for (const senderId in invitations) {
                 const invitation = invitations[senderId];
                 if (invitation.status === 'pending') {
-                    const senderName = invitation.fromName || senderId;
-
-                    const invitationDiv = document.createElement('div');
-                    invitationDiv.classList.add('invitation-popup');
-
-                    const invitationText = document.createElement('p');
-                    invitationText.textContent = `${senderName} has invited you to their party.`;
-                    invitationDiv.appendChild(invitationText);
-
-                    const acceptButton = document.createElement('button');
-                    acceptButton.textContent = 'Accept';
-                    acceptButton.addEventListener('click', () => {
-                        acceptInvitation(userId, senderId);
-                    });
-                    invitationDiv.appendChild(acceptButton);
-
-                    const declineButton = document.createElement('button');
-                    declineButton.textContent = 'Decline';
-                    declineButton.addEventListener('click', () => {
-                        declineInvitation(userId, senderId);
-                    });
-                    invitationDiv.appendChild(declineButton);
-
-                    invitationContainer.appendChild(invitationDiv);
+                    displayInvitationNotification(senderId, invitation.timestamp);
                 }
             }
         }
@@ -421,31 +398,73 @@ function fetchPartyInvitations() {
 }
 
 
-function acceptInvitation(userId, senderId) {
+function acceptInvitation(userId, senderId, notificationElement) {
     const invitationRef = ref(db, `invitations/${userId}/${senderId}`);
-    update(invitationRef, { status: 'accepted' }).then(() => {
-        // Handle additional logic for accepting the invitation
-        alert('Invitation accepted');
-        // Remove the invitation
-        remove(invitationRef).then(() => {
-            console.log('Invitation removed');
-        }).catch((error) => {
-            console.error('Error removing invitation:', error);
+    const senderPartyRef = ref(db, `users/${senderId}/party`);
+    const userPartyRef = ref(db, `users/${userId}/party`);
+
+    // Fetch the current party members of the sender
+    get(senderPartyRef).then(snapshot => {
+        let senderPartyMembers = snapshot.exists() ? snapshot.val() : {};
+
+        // Add the current user to the sender's party
+        senderPartyMembers[userId] = true;
+
+        // Update the sender's party in the database
+        set(senderPartyRef, senderPartyMembers).then(() => {
+            // Fetch the current party members of the user
+            get(userPartyRef).then(snapshot => {
+                let userPartyMembers = snapshot.exists() ? snapshot.val() : {};
+
+                // Add the sender to the user's party
+                userPartyMembers[senderId] = true;
+
+                // Update the user's party in the database
+                set(userPartyRef, userPartyMembers).then(() => {
+                    // Remove the invitation
+                    remove(invitationRef).then(() => {
+                        console.log('Invitation removed');
+                        alert('Invitation accepted and both parties updated.');
+                        // Remove the notification element
+                        if (notificationElement) {
+                            notificationElement.remove();
+                        }
+                    }).catch((error) => {
+                        console.error('Error removing invitation:', error);
+                    });
+                }).catch(error => {
+                    console.error('Error updating user party:', error);
+                    alert('Failed to accept invitation.');
+                });
+            }).catch(error => {
+                console.error('Error fetching user party data:', error);
+                alert('Failed to fetch user party data.');
+            });
+        }).catch(error => {
+            console.error('Error updating sender party:', error);
+            alert('Failed to accept invitation.');
         });
     }).catch(error => {
-        console.error('Error accepting invitation:', error);
-        alert('Failed to accept invitation.');
+        console.error('Error fetching sender party data:', error);
+        alert('Failed to fetch sender party data.');
     });
 }
 
-function declineInvitation(userId, senderId) {
-    const invitationRef = ref(db, `invitations/${userId}/${senderId}`);
+
+
+
+function declineInvitation(userId, inviterId, notificationElement) {
+    const invitationRef = ref(db, `invitations/${userId}/${inviterId}`);
     update(invitationRef, { status: 'declined' }).then(() => {
         // Handle additional logic for declining the invitation
         alert('Invitation declined');
         // Remove the invitation
         remove(invitationRef).then(() => {
             console.log('Invitation removed');
+            // Remove the notification element
+            if (notificationElement) {
+                notificationElement.remove();
+            }
         }).catch((error) => {
             console.error('Error removing invitation:', error);
         });
@@ -456,19 +475,29 @@ function declineInvitation(userId, senderId) {
 }
 
 
+function handleInvitationResponse(inviterId, isAccepted, notificationElement) {
+    const userId = localStorage.getItem('userId');
+    const invitationRef = ref(db, `invitations/${userId}/${inviterId}`);
 
-// Function to display invitation notification
+    if (isAccepted) {
+        acceptInvitation(userId, inviterId, notificationElement);
+    } else {
+        declineInvitation(userId, inviterId, notificationElement);
+    }
+}
+
+
 function displayInvitationNotification(inviterId, timestamp) {
     const notificationArea = document.getElementById('notification-area');
 
     const notification = document.createElement('div');
     notification.classList.add('notification');
 
-    const inviterNameRef = ref(db, `users/${inviterId}/name`);
+    const inviterNameRef = ref(db, `users/${inviterId}/username`);
     get(inviterNameRef).then((snapshot) => {
         const inviterName = snapshot.val() || inviterId;
         notification.innerHTML = `
-            <p>${inviterName} invited you to a party.</p>
+            <p>${inviterName} has invited you to a party.</p>
             <button class="accept-button">Accept</button>
             <button class="decline-button">Decline</button>
         `;
@@ -483,24 +512,59 @@ function displayInvitationNotification(inviterId, timestamp) {
     });
 }
 
-// Function to handle invitation response
-function handleInvitationResponse(inviterId, isAccepted, notificationElement) {
-    const userId = localStorage.getItem('userId');
-    const invitationRef = ref(db, `users/${userId}/partyInvitations/${inviterId}`);
+function removeFromAllParties(userId) {
+    const usersRef = ref(db, 'users');
 
-    if (isAccepted) {
-        alert('You have accepted the party invitation.');
-        // Add logic to handle acceptance, e.g., adding the user to the party
-    } else {
-        alert('You have declined the party invitation.');
-    }
+    // Fetch all users
+    get(usersRef).then(snapshot => {
+        if (snapshot.exists()) {
+            const allUsers = snapshot.val();
 
-    remove(invitationRef).then(() => {
-        notificationElement.remove();
-    }).catch((error) => {
-        console.error('Error handling invitation response:', error);
+            // Create an array of promises to remove the user from all parties
+            const promises = Object.keys(allUsers).map(otherUserId => {
+                if (otherUserId !== userId) {  // Avoid self-removal
+                    const otherUserPartyRef = ref(db, `users/${otherUserId}/party/${userId}`);
+
+                    // Remove the current user from the other user's party
+                    return remove(otherUserPartyRef).then(() => {
+                        console.log(`Removed from ${otherUserId}'s party`);
+                    }).catch(error => {
+                        console.error(`Error removing from ${otherUserId}'s party:`, error);
+                    });
+                }
+            });
+
+            // Add a promise to clear the user's own party
+            const userPartyRef = ref(db, `users/${userId}/party`);
+            promises.push(remove(userPartyRef).then(() => {
+                console.log(`Cleared ${userId}'s own party`);
+            }).catch(error => {
+                console.error(`Error clearing ${userId}'s own party:`, error);
+            }));
+
+            // Wait for all promises to complete
+            Promise.all(promises).then(() => {
+                console.log('Removed from all parties and cleared own party');
+            }).catch(error => {
+                console.error('Error removing from all parties or clearing own party:', error);
+            });
+        } else {
+            console.log('No users found');
+        }
+    }).catch(error => {
+        console.error('Error fetching users:', error);
     });
 }
+
+document.getElementById('leavePartyButton').addEventListener('click', () => {
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+        removeFromAllParties(userId);
+    } else {
+        alert('User ID not found');
+    }
+});
+
 
 // Call the function to start listening for party invitations
 fetchPartyInvitations();

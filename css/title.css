@@ -5,13 +5,19 @@ body, html {
     height: 100%;
     overflow: hidden;
     font-family: Arial, sans-serif;
-    background: url('/randomgamename/assets/title.jpg') no-repeat center center fixed;
     background-size: cover;
 }
 
-title{
-    font-family: "Playwrite FR Moderne", cursive;
+.container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
 }
+
 
 .overlay {
     position: absolute;
