@@ -64,8 +64,12 @@ window.settingsFunction = function settingsFunction() {
 }
 
 window.socialFunction = function socialFunction() {
+    if (localStorage.getItem('auth') ==  'True'){
     fetchFriends();
     document.getElementById('friendsPopup').style.display = 'block';
+    } else {
+        alert('You must be logged in to view your friends');
+    }
 }
 
 window.openPopup = function openPopup() {
@@ -103,12 +107,6 @@ function registerDatabase(id, email) {
         uid: id,
         email: email,
         status: 'Offline',
-        friends: {
-            kia: {
-                name: "Kia",
-                addedOn: new Date().toISOString()
-            }
-        }
     }).then(() => {
         console.log("User registered successfully");
     }).catch((error) => {
