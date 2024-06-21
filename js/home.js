@@ -38,14 +38,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Add event listeners for navigation buttons
     document.getElementById('profileButton').addEventListener('click', openProfilePopup);
-    document.getElementById('inventoryButton').addEventListener('click', openInventoryPopup);
+    document.getElementById('friendsButton').addEventListener('click', openFriendsPopup);
     document.getElementById('partyButton').addEventListener('click', openPartyPopup);
     document.getElementById('questsButton').addEventListener('click', openQuestsPopup);
     document.getElementById('settingsButton').addEventListener('click', openSettingsPopup);
 
     // Add event listeners for close buttons
     document.getElementById('closeProfile').addEventListener('click', closeProfilePopup);
-    document.getElementById('closeInventory').addEventListener('click', closeInventoryPopup);
+    document.getElementById('closeFriends').addEventListener('click', closeFriendsPopup);
     document.getElementById('closeParty').addEventListener('click', closePartyPopup);
     document.getElementById('closeQuests').addEventListener('click', closeQuestsPopup);
     document.getElementById('closeSettings').addEventListener('click', closeSettingsPopup);
@@ -77,16 +77,28 @@ function closeProfilePopup() {
     document.getElementById('profilePopup').style.display = 'none';
 }
 
-function openInventoryPopup() {
-    document.getElementById('inventoryPopup').style.display = 'block';
+function openFriendsPopup() {
+    document.getElementById('friendsPopup').style.display = 'block';
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+        fetchFriends(userId);
+    } else {
+        document.getElementById('friendsList').innerHTML = '<p>No user logged in.</p>';
+    }
 }
 
-function closeInventoryPopup() {
-    document.getElementById('inventoryPopup').style.display = 'none';
+function closeFriendsPopup() {
+    document.getElementById('friendsPopup').style.display = 'none';
 }
 
 function openPartyPopup() {
     document.getElementById('partyPopup').style.display = 'block';
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+        displayPartyMembers(userId);
+    } else {
+        document.getElementById('partyMembersContainer').innerHTML = '<p>No user logged in.</p>';
+    }
 }
 
 function closePartyPopup() {
@@ -260,25 +272,43 @@ function displayQuests(userId) {
         if (snapshot.exists()) {
             const userQuests = snapshot.val();
             const quests = userQuests.quests;
-            quests.forEach(quest => {
-                const questDiv = document.createElement('div');
-                questDiv.classList.add('quest-item');
-                questDiv.innerHTML = `
-                    <p>${quest.description}</p>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar" style="width: ${(quest.progress / quest.goal) * 100}%"></div>
-                    </div>
-                    <p>${quest.progress}/${quest.goal}</p>
-                    <button class="increment-progress-button" data-quest-id="${quest.id}">Complete Step</button>
-                `;
-                questsPopupContent.appendChild(questDiv);
+            const currentWeek = new Date().toISOString().split('T')[0];
+            
+            const allQuestsCompleted = quests.every(quest => quest.progress >= quest.goal);
+            
+            if (allQuestsCompleted) {
+                const nextWeekDate = new Date(userQuests.week);
+                nextWeekDate.setDate(nextWeekDate.getDate() + 7);
+                const timeUntilNextQuests = Math.max(0, (nextWeekDate - new Date()) / (1000 * 60 * 60 * 24)).toFixed(1); // Time in days
 
-                const incrementButton = questDiv.querySelector('.increment-progress-button');
-                incrementButton.addEventListener('click', () => {
-                    const newProgress = Math.min(quest.progress + 1, quest.goal);
-                    updateQuestProgress(userId, quest.id, newProgress);
+                questsPopupContent.innerHTML += `<p>All quests completed! New quests in ${timeUntilNextQuests} days.</p>`;
+            } else {
+                quests.forEach(quest => {
+                    const questDiv = document.createElement('div');
+                    questDiv.classList.add('quest-item');
+                    if (quest.progress >= quest.goal) {
+                        questDiv.innerHTML = `<p>Quest Completed! New quests in ${getTimeUntilNextWeek(userQuests.week)}</p>`;
+                    } else {
+                        questDiv.innerHTML = `
+                            <p>${quest.description}</p>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar" style="width: ${(quest.progress / quest.goal) * 100}%"></div>
+                            </div>
+                            <p>${quest.progress}/${quest.goal}</p>
+                            <button class="increment-progress-button" data-quest-id="${quest.id}">Complete Step</button>
+                        `;
+                    }
+                    questsPopupContent.appendChild(questDiv);
+
+                    if (quest.progress < quest.goal) {
+                        const incrementButton = questDiv.querySelector('.increment-progress-button');
+                        incrementButton.addEventListener('click', () => {
+                            const newProgress = Math.min(quest.progress + 1, quest.goal);
+                            updateQuestProgress(userId, quest.id, newProgress);
+                        });
+                    }
                 });
-            });
+            }
         } else {
             questsPopupContent.innerHTML += '<p>No quests available.</p>';
         }
@@ -286,6 +316,175 @@ function displayQuests(userId) {
         document.getElementById('closeQuests').addEventListener('click', closeQuestsPopup);
     }).catch(error => {
         console.error('Error fetching user quests:', error);
+    });
+}
+
+function getTimeUntilNextWeek(currentWeek) {
+    const nextWeekDate = new Date(currentWeek);
+    nextWeekDate.setDate(nextWeekDate.getDate() + 7);
+    return Math.max(0, (nextWeekDate - new Date()) / (1000 * 60 * 60 * 24)).toFixed(1) + ' days';
+}
+
+
+function displayPartyMembers(userId) {
+    const userPartyRef = ref(db, `users/${userId}/party`);
+    get(userPartyRef).then(snapshot => {
+        const partyPopupContent = document.getElementById('partyPopup').querySelector('.popup-content');
+        partyPopupContent.innerHTML = '<span class="close" id="closeParty">&times;</span><h2>Party Members</h2>'; // Clear existing content
+
+        if (snapshot.exists()) {
+            const partyMembers = snapshot.val();
+            console.log('Party Members:', partyMembers);
+
+            // Iterate over party members and fetch their details
+            const memberPromises = Object.keys(partyMembers).map(memberId => {
+                const memberRef = ref(db, `users/${memberId}`);
+
+                return get(memberRef).then(memberSnapshot => {
+                    if (memberSnapshot.exists()) {
+                        const memberData = memberSnapshot.val();
+                        const memberDiv = document.createElement('div');
+                        memberDiv.classList.add('party-member');
+                        memberDiv.innerHTML = `
+                            <span>${memberData.username || memberData.email.split('@')[0]}</span>
+                            <button class="remove-member-button" data-member-id="${memberId}">Remove</button>
+                        `;
+                        partyPopupContent.appendChild(memberDiv);
+
+                        const removeButton = memberDiv.querySelector('.remove-member-button');
+                        removeButton.addEventListener('click', () => {
+                            removePartyMember(userId, memberId);
+                        });
+                    }
+                }).catch(error => {
+                    console.error('Error fetching party member data:', error);
+                });
+            });
+
+            // Wait for all member data to be fetched
+            Promise.all(memberPromises).then(() => {
+                console.log('Party members displayed');
+            }).catch(error => {
+                console.error('Error displaying party members:', error);
+            });
+        } else {
+            console.log('No party members found.');
+            partyPopupContent.innerHTML += '<p>No party members found.</p>';
+        }
+
+        document.getElementById('closeParty').addEventListener('click', closePartyPopup);
+    }).catch(error => {
+        console.error('Error fetching party members:', error);
+    });
+}
+
+function removePartyMember(userId, memberId) {
+    const userPartyRef = ref(db, `users/${userId}/party/${memberId}`);
+    const memberPartyRef = ref(db, `users/${memberId}/party/${userId}`);
+
+    // Remove from both parties
+    Promise.all([remove(userPartyRef), remove(memberPartyRef)]).then(() => {
+        console.log(`Removed ${memberId} from ${userId}'s party and vice versa.`);
+        displayPartyMembers(userId); // Refresh the party members display
+    }).catch(error => {
+        console.error('Error removing party member:', error);
+    });
+}
+
+function fetchFriends(userId) {
+    const userRef = ref(db, `users/${userId}/friends`);
+    get(userRef).then(snapshot => {
+        const friendsList = document.getElementById('friendsList');
+        friendsList.innerHTML = ''; // Clear existing content
+
+        if (snapshot.exists()) {
+            const friends = snapshot.val();
+            console.log('Friends:', friends);
+
+            // Iterate over friends and fetch their details
+            const friendPromises = Object.keys(friends).map(friendId => {
+                const friendRef = ref(db, `users/${friendId}`);
+
+                return get(friendRef).then(friendSnapshot => {
+                    if (friendSnapshot.exists()) {
+                        const friendData = friendSnapshot.val();
+                        const friendDiv = document.createElement('div');
+                        friendDiv.classList.add('friend-item');
+                        friendDiv.innerHTML = `
+                            <span class="friend-name">${friendData.username || friendData.email.split('@')[0]} (${friendData.status})</span>
+                            <div class="buttons-container" style="display: none;">
+                                <button class="invite-button" data-friend-id="${friendId}">Invite to Party</button>
+                                <button class="remove-friend-button" data-friend-id="${friendId}">Unfriend</button>
+                            </div>
+                        `;
+                        friendsList.appendChild(friendDiv);
+
+                        const friendName = friendDiv.querySelector('.friend-name');
+                        const buttonsContainer = friendDiv.querySelector('.buttons-container');
+
+                        friendName.addEventListener('click', () => {
+                            buttonsContainer.style.display = buttonsContainer.style.display === 'block' ? 'none' : 'block';
+                        });
+
+                        const inviteButton = friendDiv.querySelector('.invite-button');
+                        inviteButton.addEventListener('click', () => {
+                            sendPartyInvitation(userId, friendId);
+                        });
+
+                        const removeButton = friendDiv.querySelector('.remove-friend-button');
+                        removeButton.addEventListener('click', () => {
+                            removeFriend(userId, friendId);
+                        });
+                    }
+                }).catch(error => {
+                    console.error('Error fetching friend data:', error);
+                });
+            });
+
+            // Wait for all friend data to be fetched
+            Promise.all(friendPromises).then(() => {
+                console.log('Friends displayed');
+            }).catch(error => {
+                console.error('Error displaying friends:', error);
+            });
+        } else {
+            console.log('No friends found.');
+            friendsList.innerHTML += '<p>No friends found.</p>';
+        }
+
+        document.getElementById('closeFriends').addEventListener('click', closeFriendsPopup);
+    }).catch(error => {
+        console.error('Error fetching friends:', error);
+    });
+}
+
+function sendPartyInvitation(userId, friendId) {
+    const invitationRef = ref(db, `invitations/${friendId}/${userId}`);
+    const username = localStorage.getItem('username');
+
+    set(invitationRef, {
+        from: userId,
+        fromName: username,
+        status: 'pending',
+        timestamp: new Date().toISOString()
+    }).then(() => {
+        alert('Invitation sent.');
+    }).catch(error => {
+        console.error('Error sending invitation:', error);
+        alert('Failed to send invitation.');
+    });
+}
+
+function removeFriend(userId, friendId) {
+    const userFriendsRef = ref(db, `users/${userId}/friends/${friendId}`);
+    const friendFriendsRef = ref(db, `users/${friendId}/friends/${userId}`);
+
+    // Remove from both friends lists
+    Promise.all([remove(userFriendsRef), remove(friendFriendsRef)]).then(() => {
+        console.log(`Removed ${friendId} from ${userId}'s friends and vice versa.`);
+        fetchFriends(userId); // Refresh the friends display
+    }).catch(error => {
+        console.error('Error removing friend:', error);
     });
 }
 

@@ -11,7 +11,7 @@
     <div class="container">
         <div class="navigation">
             <button id="profileButton" class="nav-button">Profile</button>
-            <button id="inventoryButton" class="nav-button">Inventory</button>
+            <button id="friendsButton" class="nav-button">Friends</button>
             <button id="partyButton" class="nav-button">Party</button>
             <button id="questsButton" class="nav-button">Quests</button>
             <button id="settingsButton" class="nav-button">Settings</button>
@@ -35,11 +35,14 @@
         </div>
     </div>
 
-    <div id="inventoryPopup" class="popup">
+    <div id="friendsPopup" class="popup">
         <div class="popup-content">
-            <span class="close" id="closeInventory">&times;</span>
-            <h2>Inventory</h2>
-            <!-- Inventory content goes here -->
+            <span class="close" id="closeFriends">&times;</span>
+            <h2>Friends List</h2>
+            <div id="friendsList">
+                <!-- Friend items will be dynamically added here -->
+            </div>
+            <button class="button" id="addFriendButton">Add Friend</button>
         </div>
     </div>
 

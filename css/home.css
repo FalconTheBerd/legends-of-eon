@@ -124,34 +124,28 @@ button:hover {
     background-color: #0056b3;
 }
 
+/* Additional CSS for styling quests */
 .quest-item {
+    padding: 10px;
+    margin-bottom: 10px;
     background-color: #fff;
     border: 1px solid #ddd;
     border-radius: 5px;
-    padding: 10px;
-    margin-bottom: 10px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.quest-item p {
-    margin: 0 0 10px;
-    font-size: 1em;
-    color: #333;
-}
-
 .progress-bar-container {
+    width: 100%;
     background-color: #f3f3f3;
-    border: 1px solid #ccc;
     border-radius: 5px;
     overflow: hidden;
-    margin-bottom: 10px;
-    height: 20px;
+    margin: 5px 0;
 }
 
 .progress-bar {
+    height: 20px;
     background-color: #4caf50;
-    height: 100%;
-    transition: width 0.3s;
+    border-radius: 5px;
 }
 
 .increment-progress-button {
@@ -167,3 +161,99 @@ button:hover {
 .increment-progress-button:hover {
     background-color: #0056b3;
 }
+
+
+/* Update for party member display */
+.party-member {
+    display: flex;
+    align-items: center; /* Align items vertically centered */
+    justify-content: space-between;
+    padding: 10px;
+    margin: 5px 0;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.party-member span {
+    font-weight: bold;
+    color: #333;
+}
+
+.party-member-status {
+    font-size: 0.9em;
+    color: #666;
+}
+
+.party-member-button {
+    padding: 5px 10px;
+    font-size: 0.9em;
+    color: white;
+    background-color: #f44336; /* Red color for the remove button */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.party-member-button:hover {
+    background-color: #d32f2f; /* Darker red on hover */
+}
+
+.remove-member-button {
+    font-size: 0.9em;
+    color: white;
+    background-color: #ff4c4c;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 150px;
+}
+
+.remove-member-button:hover {
+    background-color: #d93636;
+}
+
+/* Additional CSS for styling friends list */
+.friend-item {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.friend-item .friend-name {
+    font-size: 1em;
+    color: #333;
+    cursor: pointer;
+}
+
+.friend-item .buttons-container {
+    display: none;
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.invite-button,
+.remove-friend-button {
+    padding: 5px 10px;
+    font-size: 0.9em;
+    color: white;
+    background-color: #007bff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.invite-button:hover,
+.remove-friend-button:hover {
+    background-color: #0056b3;
+}
+
+
+
