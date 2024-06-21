@@ -60,8 +60,84 @@ window.playFunction = function playFunction() {
 }
 
 window.settingsFunction = function settingsFunction() {
-    alert("Settings button clicked");
+    document.getElementById('settingsPopup').style.display = 'block';
 }
+
+window.closeSettingsPopup = function closeSettingsPopup() {
+    document.getElementById('settingsPopup').style.display = 'none';
+}
+
+document.getElementById('resetPasswordButton').addEventListener('click', () => {
+    const email = document.getElementById('reset-email').value;
+
+    if (email) {
+        sendPasswordResetEmail(auth, email)
+            .then(() => {
+                alert('Password reset email sent');
+                closeSettingsPopup();
+            })
+            .catch((error) => {
+                const errorCode = error.code;
+                const errorMessage = error.message;
+                alert(`Error: ${errorMessage}`);
+            });
+    } else {
+        alert('Please enter your email address.');
+    }
+});
+
+document.getElementById('deleteAccountButton').addEventListener('click', () => {
+    if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+        const user = auth.currentUser;
+
+        if (user) {
+            const userId = user.uid;
+            const userRef = ref(db, `users/${userId}`);
+            const friendsRef = ref(db, `users/${userId}/friends`);
+
+            // Fetch the user's friends list to remove the user from their friend lists
+            get(friendsRef).then(snapshot => {
+                if (snapshot.exists()) {
+                    const friends = snapshot.val();
+                    const removeFriendsPromises = Object.keys(friends).map(friendId => {
+                        const friendRef = ref(db, `users/${friendId}/friends/${userId}`);
+                        return remove(friendRef);
+                    });
+
+                    return Promise.all(removeFriendsPromises);
+                }
+            }).then(() => {
+                // Delete the user from the database
+                return remove(userRef);
+            }).then(() => {
+                console.log(`Deleted user data for user ID: ${userId}`);
+                
+                // Delete the user from Firebase Authentication
+                return user.delete();
+            }).then(() => {
+                alert('Account deleted successfully');
+
+                // Clear local storage
+                localStorage.clear();
+
+                // Log out the user
+                auth.signOut().then(() => {
+                    console.log('User signed out');
+                    closeSettingsPopup();
+                }).catch(error => {
+                    console.error('Error signing out user:', error);
+                });
+            }).catch((error) => {
+                console.error('Error deleting account or related data:', error);
+                alert('Failed to delete account. Please try again.');
+            });
+        } else {
+            alert('No user is currently signed in.');
+        }
+    }
+});
+
+
 
 window.socialFunction = function socialFunction() {
     if (localStorage.getItem('auth') ==  'True'){
@@ -102,11 +178,12 @@ window.showResetPasswordForm = function showResetPasswordForm() {
     document.getElementById('resetPasswordForm').style.display = 'block';
 }
 
-function registerDatabase(id, email) {
+function registerDatabase(id, email, username) {
     set(ref(db, 'users/' + id), {
         uid: id,
         email: email,
         status: 'Offline',
+        username: username
     }).then(() => {
         console.log("User registered successfully");
     }).catch((error) => {
@@ -150,11 +227,12 @@ document.getElementById('signup-form').addEventListener('submit', (e) => {
     e.preventDefault();
     const email = document.getElementById('signup-email').value;
     const password = document.getElementById('signup-password').value;
+    const username  = document.getElementById('signup-username').value;
 
     createUserWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
             const user = userCredential.user;
-            registerDatabase(user.uid, user.email);
+            registerDatabase(user.uid, user.email, username);
             alert('Signed up successfully');
             closePopup();
         })
@@ -454,10 +532,18 @@ function handleInvitationResponse(inviterId, isAccepted, notificationElement) {
 }
 
 function displayInvitationNotification(inviterId, timestamp) {
+    console.log(`Displaying notification for inviterId: ${inviterId}, timestamp: ${timestamp}`);
     const notificationArea = document.getElementById('notification-area');
+    
+    // Check if the notification for this inviter already exists
+    if (document.getElementById(`invitation-${inviterId}`)) {
+        console.log(`Notification for inviterId: ${inviterId} already exists`);
+        return; // If it exists, do not add it again
+    }
 
     const notification = document.createElement('div');
     notification.classList.add('notification');
+    notification.id = `invitation-${inviterId}`; // Unique ID for each notification
 
     const inviterNameRef = ref(db, `users/${inviterId}/username`);
     get(inviterNameRef).then((snapshot) => {
@@ -475,8 +561,12 @@ function displayInvitationNotification(inviterId, timestamp) {
         declineButton.addEventListener('click', () => handleInvitationResponse(inviterId, false, notification));
 
         notificationArea.appendChild(notification);
+        console.log(`Notification for inviterId: ${inviterId} added`);
+    }).catch(error => {
+        console.error(`Error fetching inviter name for inviterId: ${inviterId}`, error);
     });
 }
+
 
 function fetchPartyInvitations() {
     const userId = localStorage.getItem('userId');
@@ -486,6 +576,7 @@ function fetchPartyInvitations() {
 
     const invitationsRef = ref(db, `invitations/${userId}`);
     onValue(invitationsRef, (snapshot) => {
+        console.log(`fetchPartyInvitations triggered for userId: ${userId}`);
         if (snapshot.exists()) {
             const invitations = snapshot.val();
             const invitationContainer = document.getElementById('invitationContainer');
@@ -500,9 +591,6 @@ function fetchPartyInvitations() {
         }
     });
 }
-
-
-
 
 function removeFromAllParties(userId) {
     const usersRef = ref(db, 'users');
@@ -663,8 +751,9 @@ auth.onAuthStateChanged(user => {
                 const username = userData.username || userData.email.split('@')[0];
                 localStorage.setItem('userId', userId);
                 localStorage.setItem('username', username);
-                displayPartyMembers(userId);  // Display party members
-                fetchPartyInvitations();      // Fetch party invitations
+                                displayPartyMembers(userId);  // Display party members
+
+                fetchPartyInvitations(); // Set up the real-time listener for party invitations
             }
         });
     }
