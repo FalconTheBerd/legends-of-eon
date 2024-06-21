@@ -244,7 +244,6 @@ function addFriend() {
 
 document.getElementById('addFriendButton').addEventListener('click', addFriend);
 
-
 function fetchFriends() {
     const userId = localStorage.getItem('userId');
     if (!userId) {
@@ -310,11 +309,6 @@ function fetchFriends() {
                                 });
                             });
 
-
-
-
-
-
                             const unfriendButton = document.createElement('button');
                             unfriendButton.textContent = 'Unfriend';
                             unfriendButton.classList.add('unfriend-button');
@@ -372,28 +366,7 @@ function toggleButtons(friendItem) {
 }
 
 // Function to fetch party invitations
-function fetchPartyInvitations() {
-    const userId = localStorage.getItem('userId');
-    if (!userId) {
-        return;
-    }
 
-    const invitationsRef = ref(db, `invitations/${userId}`);
-    onValue(invitationsRef, (snapshot) => {
-        if (snapshot.exists()) {
-            const invitations = snapshot.val();
-            const invitationContainer = document.getElementById('invitationContainer');
-            invitationContainer.innerHTML = '';
-
-            for (const senderId in invitations) {
-                const invitation = invitations[senderId];
-                if (invitation.status === 'pending') {
-                    displayInvitationNotification(senderId, invitation.timestamp);
-                }
-            }
-        }
-    });
-}
 
 
 function acceptInvitation(userId, senderId, notificationElement) {
@@ -448,9 +421,6 @@ function acceptInvitation(userId, senderId, notificationElement) {
     });
 }
 
-
-
-
 function declineInvitation(userId, inviterId, notificationElement) {
     const invitationRef = ref(db, `invitations/${userId}/${inviterId}`);
     update(invitationRef, { status: 'declined' }).then(() => {
@@ -472,7 +442,6 @@ function declineInvitation(userId, inviterId, notificationElement) {
     });
 }
 
-
 function handleInvitationResponse(inviterId, isAccepted, notificationElement) {
     const userId = localStorage.getItem('userId');
     const invitationRef = ref(db, `invitations/${userId}/${inviterId}`);
@@ -483,7 +452,6 @@ function handleInvitationResponse(inviterId, isAccepted, notificationElement) {
         declineInvitation(userId, inviterId, notificationElement);
     }
 }
-
 
 function displayInvitationNotification(inviterId, timestamp) {
     const notificationArea = document.getElementById('notification-area');
@@ -509,6 +477,32 @@ function displayInvitationNotification(inviterId, timestamp) {
         notificationArea.appendChild(notification);
     });
 }
+
+function fetchPartyInvitations() {
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+        return;
+    }
+
+    const invitationsRef = ref(db, `invitations/${userId}`);
+    onValue(invitationsRef, (snapshot) => {
+        if (snapshot.exists()) {
+            const invitations = snapshot.val();
+            const invitationContainer = document.getElementById('invitationContainer');
+            invitationContainer.innerHTML = '';
+
+            for (const senderId in invitations) {
+                const invitation = invitations[senderId];
+                if (invitation.status === 'pending') {
+                    displayInvitationNotification(senderId, invitation.timestamp);
+                }
+            }
+        }
+    });
+}
+
+
+
 
 function removeFromAllParties(userId) {
     const usersRef = ref(db, 'users');
@@ -543,6 +537,7 @@ function removeFromAllParties(userId) {
             // Wait for all promises to complete
             Promise.all(promises).then(() => {
                 console.log('Removed from all parties and cleared own party');
+                displayPartyMembers(userId);  // Refresh the party members display
             }).catch(error => {
                 console.error('Error removing from all parties or clearing own party:', error);
             });
@@ -554,6 +549,101 @@ function removeFromAllParties(userId) {
     });
 }
 
+function displayPartyMembers(userId) {
+    const userPartyRef = ref(db, `users/${userId}/party`);
+    console.log(`Setting up listener for party members of user ID: ${userId}`);
+
+    // Set up a real-time listener for the party members
+    onValue(userPartyRef, snapshot => {
+        const partyMembersContainer = document.getElementById('partyMembersContainer');
+        partyMembersContainer.innerHTML = ''; // Clear existing content
+
+        const heading = document.createElement('div');
+        heading.classList.add('party-heading');
+        heading.textContent = 'Party Members';
+        partyMembersContainer.appendChild(heading);
+
+        if (snapshot.exists()) {
+            const partyMembers = snapshot.val();
+            console.log('Party Members:', partyMembers);
+
+            // Iterate over party members and fetch their details
+            const memberPromises = Object.keys(partyMembers).map(memberId => {
+                const memberRef = ref(db, `users/${memberId}`);
+                console.log(`Fetching details for member ID: ${memberId}`);
+
+                return get(memberRef).then(memberSnapshot => {
+                    if (memberSnapshot.exists()) {
+                        const memberData = memberSnapshot.val();
+                        console.log(`Fetched details for member ID: ${memberId}`, memberData);
+
+                        const memberDiv = document.createElement('div');
+                        memberDiv.classList.add('party-member');
+
+                        const memberName = document.createElement('span');
+                        memberName.textContent = memberData.username || memberData.email.split('@')[0];
+                        memberDiv.appendChild(memberName);
+
+                        const memberStatus = document.createElement('div');
+                        memberStatus.classList.add('party-member-status');
+                        memberStatus.textContent = memberData.status;
+                        memberDiv.appendChild(memberStatus);
+
+                        const removeButton = document.createElement('button');
+                        removeButton.classList.add('party-member-button');
+                        removeButton.textContent = 'Remove';
+                        removeButton.addEventListener('click', () => {
+                            removeFromParty(userId, memberId);
+                        });
+                        memberDiv.appendChild(removeButton);
+
+                        partyMembersContainer.appendChild(memberDiv);
+                        console.log(`Appended member ID: ${memberId} to partyMembersContainer`);
+                    } else {
+                        console.error('Party member does not exist:', memberId);
+                    }
+                }).catch(error => {
+                    console.error('Error fetching party member data:', error);
+                });
+            });
+
+            // Wait for all member data to be fetched
+            Promise.all(memberPromises).then(() => {
+                console.log('Party members displayed');
+                partyMembersContainer.style.display = 'block'; // Make the container visible
+            }).catch(error => {
+                console.error('Error displaying party members:', error);
+            });
+        } else {
+            console.log('No party members found.');
+            partyMembersContainer.innerHTML += '<div>No party members found.</div>';
+            partyMembersContainer.style.display = 'block'; // Show message in container
+        }
+    }, error => {
+        console.error('Error setting up party members listener:', error);
+    });
+}
+
+function removeFromParty(userId, memberId) {
+    const userPartyRef = ref(db, `users/${userId}/party/${memberId}`);
+    const memberPartyRef = ref(db, `users/${memberId}/party/${userId}`);
+
+    // Remove the member from the user's party
+    remove(userPartyRef).then(() => {
+        console.log(`Removed member ID: ${memberId} from user ID: ${userId}'s party`);
+
+        // Remove the user from the member's party
+        return remove(memberPartyRef);
+    }).then(() => {
+        console.log(`Removed user ID: ${userId} from member ID: ${memberId}'s party`);
+        // Refresh the party members display
+        displayPartyMembers(userId);
+    }).catch(error => {
+        console.error('Error removing party member:', error);
+    });
+}
+
+
 document.getElementById('leavePartyButton').addEventListener('click', () => {
     const userId = localStorage.getItem('userId');
     if (userId) {
@@ -563,6 +653,22 @@ document.getElementById('leavePartyButton').addEventListener('click', () => {
     }
 });
 
+auth.onAuthStateChanged(user => {
+    if (user) {
+        const userId = user.uid;
+        const userRef = ref(db, `users/${userId}`);
+        get(userRef).then(snapshot => {
+            if (snapshot.exists()) {
+                const userData = snapshot.val();
+                const username = userData.username || userData.email.split('@')[0];
+                localStorage.setItem('userId', userId);
+                localStorage.setItem('username', username);
+                displayPartyMembers(userId);  // Display party members
+                fetchPartyInvitations();      // Fetch party invitations
+            }
+        });
+    }
+});
 
 // Call the function to start listening for party invitations
 fetchPartyInvitations();
