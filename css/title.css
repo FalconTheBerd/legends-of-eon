@@ -39,6 +39,18 @@ html {
     text-align: center;
 }
 
+.accept-button {
+    background-color: lightgreen;
+    border-radius: 5px;
+    border-color: lightgreen;
+}
+
+.decline-button {
+    background-color: lightcoral;
+    border-radius: 5px;
+    border-color: lightcoral;
+}
+
 .account-button {
     position: absolute;
     top: 13px;

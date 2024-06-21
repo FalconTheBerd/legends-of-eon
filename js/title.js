@@ -473,7 +473,7 @@ function acceptInvitation(userId, senderId, notificationElement) {
                     // Remove the invitation
                     remove(invitationRef).then(() => {
                         console.log('Invitation removed');
-                        alert('Invitation accepted and both parties updated.');
+                       // alert('Invitation accepted and both parties updated.');
                         // Remove the notification element
                         if (notificationElement) {
                             notificationElement.remove();
@@ -503,7 +503,7 @@ function declineInvitation(userId, inviterId, notificationElement) {
     const invitationRef = ref(db, `invitations/${userId}/${inviterId}`);
     update(invitationRef, { status: 'declined' }).then(() => {
         // Handle additional logic for declining the invitation
-        alert('Invitation declined');
+        // alert('Invitation declined');
         // Remove the invitation
         remove(invitationRef).then(() => {
             console.log('Invitation removed');
@@ -751,13 +751,10 @@ auth.onAuthStateChanged(user => {
                 const username = userData.username || userData.email.split('@')[0];
                 localStorage.setItem('userId', userId);
                 localStorage.setItem('username', username);
-                                displayPartyMembers(userId);  // Display party members
-
+                displayPartyMembers(userId);  // Display party members
                 fetchPartyInvitations(); // Set up the real-time listener for party invitations
             }
         });
     }
 });
 
-// Call the function to start listening for party invitations
-fetchPartyInvitations();
