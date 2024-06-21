@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legends of Eon - Main Hub</title>
+    <link rel="stylesheet" href="css/home.css">
+</head>
+<body>
+    <div class="overlay"></div>
+    <div class="container">
+        <div class="navigation">
+            <button id="profileButton" class="nav-button">Profile</button>
+            <button id="inventoryButton" class="nav-button">Inventory</button>
+            <button id="partyButton" class="nav-button">Party</button>
+            <button id="questsButton" class="nav-button">Quests</button>
+            <button id="settingsButton" class="nav-button">Settings</button>
+        </div>
+        <div class="content">
+            <h1 class="title">Legends of Eon</h1>
+            <div id="worldMap" class="map-container">
+                <h2>World Map</h2>
+                <div id="elvenWoods" class="region">Elven Woods</div>
+                <div id="dwarvenMountains" class="region">Dwarven Mountains</div>
+                <div id="mysticIsles" class="region">Mystic Isles</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="profilePopup" class="popup">
+        <div class="popup-content">
+            <span class="close" id="closeProfile">&times;</span>
+            <h2>Profile</h2>
+            <!-- Profile content goes here -->
+        </div>
+    </div>
+
+    <div id="inventoryPopup" class="popup">
+        <div class="popup-content">
+            <span class="close" id="closeInventory">&times;</span>
+            <h2>Inventory</h2>
+            <!-- Inventory content goes here -->
+        </div>
+    </div>
+
+    <div id="partyPopup" class="popup">
+        <div class="popup-content">
+            <span class="close" id="closeParty">&times;</span>
+            <h2>Party</h2>
+            <!-- Party content goes here -->
+        </div>
+    </div>
+
+    <div id="questsPopup" class="popup">
+        <div class="popup-content">
+            <span class="close" id="closeQuests">&times;</span>
+            <h2>Quests</h2>
+            <!-- Quests content goes here -->
+        </div>
+    </div>
+
+    <div id="settingsPopup" class="popup">
+        <div class="popup-content">
+            <span class="close" id="closeSettings">&times;</span>
+            <h2>Settings</h2>
+            <!-- Settings content goes here -->
+            <button id="resetPasswordButton">Reset Password</button>
+            <button id="deleteAccountButton">Delete Account</button>
+        </div>
+    </div>
+
+    <script type="module" src="js/home.js"></script>
+</body>
+</html>

@@ -68,7 +68,7 @@ window.closeSettingsPopup = function closeSettingsPopup() {
 }
 
 document.getElementById('resetPasswordButton').addEventListener('click', () => {
-    const email = document.getElementById('reset-email').value;
+    const email = localStorage.getItem('userEmail')
 
     if (email) {
         sendPasswordResetEmail(auth, email)
