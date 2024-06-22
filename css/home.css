@@ -24,14 +24,16 @@ body, html {
     justify-content: center;
     align-items: center;
     text-align: center;
+    flex-direction: column;
 }
 
 .navigation {
     position: absolute;
-    top: -12px;
+    top: -10px;
     width: 100%;
     display: flex;
     justify-content: space-around;
+    
 }
 
 .nav-button {
@@ -57,34 +59,37 @@ body, html {
 }
 
 .map-container {
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .region {
-    background-color: #f0f0f0;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    padding: 10px;
     margin: 10px;
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
     cursor: pointer;
 }
 
 .region:hover {
-    background-color: #ddd;
+    background-color: #0056b3;
 }
 
 /* CSS for fixing the popup in the center */
 .popup {
     display: none;
-    position: fixed; /* Changed from absolute to fixed */
+    position: fixed;
     z-index: 2;
-    left: 50%; /* Center horizontally */
-    top: 50%; /* Center vertically */
-    transform: translate(-50%, -50%); /* Adjust position for exact centering */
-    width: 300px; /* Fixed width */
-    height: auto; /* Adjust height automatically */
-    overflow: auto; /* Scroll inside the popup if content overflows */
-    background-color: rgba(0, 0, 0, 0.0); /* Background color for the popup */
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+    height: auto;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.0);
 }
 
 .popup-content {
@@ -161,7 +166,6 @@ button:hover {
 .increment-progress-button:hover {
     background-color: #0056b3;
 }
-
 
 /* Update for party member display */
 .party-member {
@@ -255,5 +259,17 @@ button:hover {
     background-color: #0056b3;
 }
 
+/* Additional styling for the popups */
+.popup-button {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+}
 
-
+.popup-button:hover {
+    background-color: #0056b3;
+}

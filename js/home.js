@@ -30,30 +30,36 @@ const possibleQuests = [
 document.addEventListener('DOMContentLoaded', () => {
     const isGitHubPages = location.hostname.includes('github.io');
     const repoName = 'randomgamename';
-    const imagePath = isGitHubPages 
-        ? `/${repoName}/assets/title.jpg` 
+    const imagePath = isGitHubPages
+        ? `/${repoName}/assets/title.jpg`
         : '../assets/title.jpg';
-    
+
     document.body.style.background = `url(${imagePath}) no-repeat center center fixed`;
 
-    // Add event listeners for navigation buttons
     document.getElementById('profileButton').addEventListener('click', openProfilePopup);
     document.getElementById('friendsButton').addEventListener('click', openFriendsPopup);
     document.getElementById('partyButton').addEventListener('click', openPartyPopup);
     document.getElementById('questsButton').addEventListener('click', openQuestsPopup);
     document.getElementById('settingsButton').addEventListener('click', openSettingsPopup);
 
-    // Add event listeners for close buttons
     document.getElementById('closeProfile').addEventListener('click', closeProfilePopup);
     document.getElementById('closeFriends').addEventListener('click', closeFriendsPopup);
     document.getElementById('closeParty').addEventListener('click', closePartyPopup);
     document.getElementById('closeQuests').addEventListener('click', closeQuestsPopup);
     document.getElementById('closeSettings').addEventListener('click', closeSettingsPopup);
 
-    // Add event listeners for world map regions
-    document.getElementById('elvenWoods').addEventListener('click', startElvenWoodsMission);
-    document.getElementById('dwarvenMountains').addEventListener('click', startDwarvenMountainsMission);
-    document.getElementById('mysticIsles').addEventListener('click', startMysticIslesMission);
+    document.getElementById('elvenWoods').addEventListener('click', openElvenWoodsPopup);
+    document.getElementById('dwarvenMountains').addEventListener('click', openDwarvenMountainsPopup);
+    document.getElementById('mysticIsles').addEventListener('click', openMysticIslesPopup);
+
+    document.getElementById('closeElvenWoods').addEventListener('click', closeElvenWoodsPopup);
+    document.getElementById('closeDwarvenMountains').addEventListener('click', closeDwarvenMountainsPopup);
+    document.getElementById('closeMysticIsles').addEventListener('click', closeMysticIslesPopup);
+
+    document.getElementById('startElvenWoods').addEventListener('click', startElvenWoodsAdventure);
+    document.getElementById('startDwarvenMountains').addEventListener('click', startDwarvenMountainsAdventure);
+    document.getElementById('startMysticIsles').addEventListener('click', startMysticIslesAdventure);
+
 
     // Add event listeners for settings popup buttons
     document.getElementById('resetPasswordButton').addEventListener('click', resetPassword);
@@ -101,6 +107,26 @@ function openPartyPopup() {
     }
 }
 
+// Function to notify all party members to join the game
+function notifyPartyToJoin(partyId, gameId) {
+    const partyRef = ref(db, `parties/${partyId}/members`);
+    get(partyRef).then((snapshot) => {
+        if (snapshot.exists()) {
+            const members = snapshot.val();
+            for (const memberId in members) {
+                const memberNotificationsRef = ref(db, `users/${memberId}/notifications`);
+                const newNotificationRef = child(memberNotificationsRef, new Date().getTime().toString());
+                set(newNotificationRef, {
+                    type: 'joinGame',
+                    gameId: gameId,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        }
+    });
+}
+
+
 function closePartyPopup() {
     document.getElementById('partyPopup').style.display = 'none';
 }
@@ -121,19 +147,64 @@ function closeSettingsPopup() {
     document.getElementById('settingsPopup').style.display = 'none';
 }
 
-function startElvenWoodsMission() {
-    alert('Starting mission in Elven Woods');
-    // Implement mission start logic
+function openElvenWoodsPopup() {
+    document.getElementById('elvenWoodsPopup').style.display = 'block';
 }
 
-function startDwarvenMountainsMission() {
-    alert('Starting mission in Dwarven Mountains');
-    // Implement mission start logic
+// Function to close the Elven Woods popup
+function closeElvenWoodsPopup() {
+    document.getElementById('elvenWoodsPopup').style.display = 'none';
 }
 
-function startMysticIslesMission() {
-    alert('Starting mission in Mystic Isles');
-    // Implement mission start logic
+// Function to open the Dwarven Mountains popup
+function openDwarvenMountainsPopup() {
+    document.getElementById('dwarvenMountainsPopup').style.display = 'block';
+}
+
+// Function to close the Dwarven Mountains popup
+function closeDwarvenMountainsPopup() {
+    document.getElementById('dwarvenMountainsPopup').style.display = 'none';
+}
+
+// Function to open the Mystic Isles popup
+function openMysticIslesPopup() {
+    document.getElementById('mysticIslesPopup').style.display = 'block';
+}
+
+// Function to close the Mystic Isles popup
+function closeMysticIslesPopup() {
+    document.getElementById('mysticIslesPopup').style.display = 'none';
+}
+
+function startElvenWoodsAdventure() {
+    const userId = auth.currentUser.uid;
+    const userRef = ref(db, `users/${userId}`);
+    
+    get(userRef).then((snapshot) => {
+        if (snapshot.exists()) {
+            const userData = snapshot.val();
+            const partyId = userData.partyId;
+            if (partyId) {
+                notifyPartyToJoin(partyId, 'elvenWoods');
+            }
+            window.location.href = 'elvenWoods.html';
+        }
+    }).catch((error) => {
+        console.error('Error starting Elven Woods adventure:', error);
+    });
+}
+
+
+function startDwarvenMountainsAdventure() {
+    closeDwarvenMountainsPopup();
+    alert("Starting adventure in Dwarven Mountains...");
+    // Add logic to start the adventure in Dwarven Mountains
+}
+
+function startMysticIslesAdventure() {
+    closeMysticIslesPopup();
+    alert("Starting adventure in Mystic Isles...");
+    // Add logic to start the adventure in Mystic Isles
 }
 
 function resetPassword() {
@@ -273,9 +344,9 @@ function displayQuests(userId) {
             const userQuests = snapshot.val();
             const quests = userQuests.quests;
             const currentWeek = new Date().toISOString().split('T')[0];
-            
+
             const allQuestsCompleted = quests.every(quest => quest.progress >= quest.goal);
-            
+
             if (allQuestsCompleted) {
                 const nextWeekDate = new Date(userQuests.week);
                 nextWeekDate.setDate(nextWeekDate.getDate() + 7);

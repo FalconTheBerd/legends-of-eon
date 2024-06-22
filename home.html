@@ -50,7 +50,9 @@
         <div class="popup-content">
             <span class="close" id="closeParty">&times;</span>
             <h2>Party</h2>
-            <!-- Party content goes here -->
+            <div id="partyMembersContainer">
+                <!-- Party members will be dynamically added here -->
+            </div>
         </div>
     </div>
 
@@ -58,7 +60,9 @@
         <div class="popup-content">
             <span class="close" id="closeQuests">&times;</span>
             <h2>Quests</h2>
-            <!-- Quests content goes here -->
+            <div id="questsContainer">
+                <!-- Quests content goes here -->
+            </div>
         </div>
     </div>
 
@@ -66,9 +70,35 @@
         <div class="popup-content">
             <span class="close" id="closeSettings">&times;</span>
             <h2>Settings</h2>
-            <!-- Settings content goes here -->
             <button id="resetPasswordButton">Reset Password</button>
             <button id="deleteAccountButton">Delete Account</button>
+        </div>
+    </div>
+
+    <div id="elvenWoodsPopup" class="popup">
+        <div class="popup-content">
+            <span class="close" id="closeElvenWoods">&times;</span>
+            <h2>Elven Woods</h2>
+            <p>Embark on a journey in the mystical Elven Woods. Choose an activity:</p>
+            <button class="popup-button" id="startElvenWoods">Start Adventure</button>
+        </div>
+    </div>
+
+    <div id="dwarvenMountainsPopup" class="popup">
+        <div class="popup-content">
+            <span class="close" id="closeDwarvenMountains">&times;</span>
+            <h2>Dwarven Mountains</h2>
+            <p>Explore the rugged Dwarven Mountains. Choose an activity:</p>
+            <button class="popup-button" id="startDwarvenMountains">Start Adventure</button>
+        </div>
+    </div>
+
+    <div id="mysticIslesPopup" class="popup">
+        <div class="popup-content">
+            <span class="close" id="closeMysticIsles">&times;</span>
+            <h2>Mystic Isles</h2>
+            <p>Sail through the enchanting Mystic Isles. Choose an activity:</p>
+            <button class="popup-button" id="startMysticIsles">Start Adventure</button>
         </div>
     </div>
 
