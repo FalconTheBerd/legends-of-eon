@@ -55,9 +55,7 @@ function logout() {
 
 document.getElementById('logOutButton').addEventListener('click', logout);
 
-window.playFunction = function playFunction() {
-    alert("Play button clicked");
-}
+
 
 window.settingsFunction = function settingsFunction() {
     document.getElementById('settingsPopup').style.display = 'block';
@@ -176,6 +174,15 @@ window.showResetPasswordForm = function showResetPasswordForm() {
     document.getElementById('signUpForm').style.display = 'none';
     document.getElementById('signInForm').style.display = 'none';
     document.getElementById('resetPasswordForm').style.display = 'block';
+}
+
+window.playFunction = function playFunction() {
+    if (localStorage.getItem('auth')){
+        location.href = 'home.html';
+    }
+    else {
+        alert('Not signed in')
+    }
 }
 
 function registerDatabase(id, email, username) {
